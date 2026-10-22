@@ -77,4 +77,29 @@ class Movie(models.Model):
         return [c.strip() for c in self.cast.split(".") if c.strip()]
         # "tom.joe.michel." -> "tom" "joe" "michel" ""
 
-        
+class Review(models.Model):
+    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name="reviews")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="reviews")
+    rating = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(10)])
+    text = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(fields=["movie", "user"], name="one_review_per_user"),
+        ]
+
+    def __str__(self):
+        return f"{self.user} → {self.movie}: {self.rating}/10"
+
+class WatchlistItem(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="watchlist")
+    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name="watchlisted_by")
+    added_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-added_at"]
+        constraints = [
+            models.UniqueConstraint(fields=["user", "movie"], name="unique_watchlist_item"),
+        ]
