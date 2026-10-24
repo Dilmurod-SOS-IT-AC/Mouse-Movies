@@ -17,7 +17,7 @@ def movie_list(request):
 
     movies = Movie.objects.prefetch_related("genres").annotate(
         avg_rating=Avg("reviews__rating"), review_count=Count("reviews", distinct=True)
-    )
+    ).order_by("-created_at")
 
     if genre:
         movies = movies.filter(genres__slug = genre)
