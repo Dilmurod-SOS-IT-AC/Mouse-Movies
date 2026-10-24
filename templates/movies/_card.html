@@ -1,0 +1,23 @@
+<article class="card">
+  <a class="card-link" href="{{ movie.get_absolute_url }}" aria-label="{{ movie.title }}">
+    <div class="poster" data-seed="{{ movie.title }}">
+      {% if movie.poster %}
+        <img src="{{ movie.poster.url }}" alt="Poster of {{ movie.title }}" loading="lazy">
+      {% else %}
+        <span class="poster-initial">{{ movie.title|slice:":1" }}</span>
+      {% endif %}
+      {% if movie.avg_rating %}
+        <span class="badge badge-rating">&#9733; {{ movie.avg_rating|floatformat:1 }}</span>
+      {% endif %}
+    </div>
+    <div class="card-body">
+      <h3 class="card-title">{{ movie.title }}</h3>
+      <p class="card-meta">
+        {{ movie.release_year }}{% if movie.runtime %} &middot; {{ movie.runtime }} min{% endif %}
+      </p>
+      <p class="card-genres">
+        {% for genre in movie.genres.all %}<span class="chip chip-sm">{{ genre.name }}</span>{% endfor %}
+      </p>
+    </div>
+  </a>
+</article>

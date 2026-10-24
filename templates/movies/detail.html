@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}{{ movie.title }} ({{ movie.release_year }}) &middot; Mouse Movies{% endblock %}
+
+{% block content %}
+<a class="back-link" href="{% url 'movies:list' %}">&larr; All movies</a>
+
+<section class="detail">
+  <div class="poster poster-lg" data-seed="{{ movie.title }}">
+    {% if movie.poster %}
+      <img src="{{ movie.poster.url }}" alt="Poster of {{ movie.title }}">
+    {% else %}
+      <span class="poster-initial">{{ movie.title|slice:":1" }}</span>
+    {% endif %}
+  </div>
+
+  <div class="detail-info">
+    <h1>{{ movie.title }} <span class="muted year">({{ movie.release_year }})</span></h1>
+
+    <p class="detail-meta">
+      {% if movie.avg_rating %}
+        <span class="badge badge-rating badge-lg">&#9733; {{ movie.avg_rating|floatformat:1 }} <small>/ 10</small></span>
+      {% else %}
+        <span class="muted">No ratings yet</span>
+      {% endif %}
+      {% if movie.runtime %}<span class="muted">{{ movie.runtime }} min</span>{% endif %}
+      {% if movie.director %}<span class="muted">Directed by <strong>{{ movie.director }}</strong></span>{% endif %}
+    </p>
+
+    <p class="chips">
+      {% for genre in movie.genres.all %}
+        <a class="chip" href="{% url 'movies:list' %}?genre={{ genre.slug }}">{{ genre.name }}</a>
+      {% endfor %}
+    </p>
+
+    <p class="overview">{{ movie.overview }}</p>
+
+    {% if movie.cast_list %}
+      <h3 class="subhead">Cast</h3>
+      <p class="chips">
+        {% for actor in movie.cast_list %}<span class="chip chip-outline">{{ actor }}</span>{% endfor %}
+      </p>
+    {% endif %}
+
+    <div class="actions">
+      {% if user.is_authenticated %}
+        <form method="post" action="{% url 'movies:toggle_watchlist' movie.slug %}">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ request.path }}">
+          {% if in_watchlist %}
+            <button type="submit" class="btn btn-ghost">&#10003; In your watchlist &mdash; remove</button>
+          {% else %}
+            <button type="submit" class="btn btn-primary">+ Add to watchlist</button>
+          {% endif %}
+        </form>
+      {% else %}
+        <a class="btn btn-primary" href="{% url 'login' %}?next={{ request.path|urlencode }}">Log in to save or review</a>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<section class="reviews">
+  <div class="section-head">
+    <h2>Reviews</h2>
+    <span class="muted">{{ reviews|length }} review{{ reviews|length|pluralize }}</span>
+  </div>
+
+  {% if user.is_authenticated %}
+    <form method="post" class="panel form" novalidate>
+      <h3>{% if user_review %}Edit your review{% else %}Write a review{% endif %}</h3>
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+
+      <div class="field">
+        <label for="{{ form.rating.id_for_label }}">Rating (1&ndash;10)</label>
+        {{ form.rating }}
+        {% for error in form.rating.errors %}<p class="error">{{ error }}</p>{% endfor %}
+      </div>
+
+      <div class="field">
+        <label for="{{ form.text.id_for_label }}">Your review</label>
+        {{ form.text }}
+        {% for error in form.text.errors %}<p class="error">{{ error }}</p>{% endfor %}
+      </div>
+
+      <button type="submit" class="btn btn-primary">{% if user_review %}Update review{% else %}Post review{% endif %}</button>
+    </form>
+
+    {% if user_review %}
+      <form method="post" action="{% url 'movies:delete_review' movie.slug %}" class="delete-review" data-confirm="Delete your review?">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger btn-sm">Delete my review</button>
+      </form>
+    {% endif %}
+  {% else %}
+    <div class="panel">
+      <p><a href="{% url 'login' %}?next={{ request.path|urlencode }}">Log in</a> or <a href="{% url 'signup' %}">sign up</a> to rate and review this movie.</p>
+    </div>
+  {% endif %}
+
+  <ul class="review-list">
+    {% for review in reviews %}
+      <li class="review {% if review.user_id == user.id %}review-own{% endif %}">
+        <div class="review-head">
+          <span class="avatar" aria-hidden="true">{{ review.user.username|slice:":1"|upper }}</span>
+          <div>
+            <strong>{{ review.user.username }}</strong>
+            <span class="muted small">{{ review.created_at|date:"M j, Y" }}</span>
+          </div>
+          <span class="badge badge-rating">&#9733; {{ review.rating }}/10</span>
+        </div>
+        {% if review.text %}<p>{{ review.text|linebreaksbr }}</p>{% endif %}
+      </li>
+    {% empty %}
+      <li class="empty"><p class="muted">Nobody has reviewed this movie yet. Be the first!</p></li>
+    {% endfor %}
+  </ul>
+</section>
+{% endblock %}

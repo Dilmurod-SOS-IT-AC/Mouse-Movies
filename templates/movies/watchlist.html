@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}My watchlist &middot; Mouse Movies{% endblock %}
+
+{% block content %}
+<div class="section-head">
+  <h1>My watchlist</h1>
+  <span class="muted">{{ items|length }} movie{{ items|length|pluralize }}</span>
+</div>
+
+{% if items %}
+  <div class="grid">
+    {% for item in items %}
+      {% with movie=item.movie %}
+        <div class="card-wrap">
+          {% include "movies/_card.html" %}
+          <form method="post" action="{% url 'movies:toggle_watchlist' movie.slug %}" class="card-action">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{% url 'movies:watchlist' %}">
+            <button type="submit" class="btn btn-ghost btn-sm btn-block">Remove</button>
+          </form>
+        </div>
+      {% endwith %}
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="empty">
+    <h3>Your watchlist is empty</h3>
+    <p class="muted">Add movies you want to watch and they will show up here.</p>
+    <a class="btn btn-primary" href="{% url 'movies:list' %}">Browse movies</a>
+  </div>
+{% endif %}
+{% endblock %}
