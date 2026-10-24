@@ -1,4 +1,4 @@
-.env 
+.env
 .env.*
 !.env.example
 
@@ -9,8 +9,8 @@ env/
 __pycache__/
 *.py[cod]
 *.pyo
-*eggs/
-*eggs-info/
+*.egg-info/
+*.egg
 build/
 dist/
 
