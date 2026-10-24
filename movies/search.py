@@ -4,7 +4,7 @@ from django.db.models.functions import Coalesce, Greatest
 
 FTS_WEIGHT = 0.7
 TRGM_WEIGHT = 0.3
-TRGM_THERESHOLD = 0.15
+TRGM_THRESHOLD = 0.15
 
 def hybrid_search(queryset, q):
     query = SearchQuery(q, search_type="websearch", config="english")
@@ -19,7 +19,7 @@ def hybrid_search(queryset, q):
             ),
         )
         .annotate(score=F("fts_rank") * FTS_WEIGHT + F("trgm") * TRGM_WEIGHT)
-        .filter(search_vector=query | Q(trgm__gt=TRGM_THERESHOLD))
+        .filter(Q(search_vector=query) | Q(trgm__gt=TRGM_THRESHOLD))
         .order_by("-score", "-release_year")
     )
 
