@@ -1,4 +1,3 @@
-from django.db import models
 from django.conf import settings
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVector, SearchVectorField
@@ -7,7 +6,7 @@ from django.db import models
 from django.urls import reverse
 from django.utils.text import slugify
 
-class Ganer(models.Model):
+class Genre(models.Model):
     name = models.CharField(max_length=50, unique=True)
     slug = models.SlugField(unique=True)
 
@@ -23,17 +22,17 @@ class Movie(models.Model):
     slug = models.SlugField(max_length=200, unique=True, blank=True)
     overview = models.TextField()
     director = models.CharField(max_length=150, blank=True)
-    cast = models.TextField(blank=True, help_text="Comma-seperated actor names")
+    cast = models.TextField(blank=True, help_text="Comma-separated actor names")
     release_year = models.PositiveSmallIntegerField()
     runtime = models.PositiveSmallIntegerField(null=True, blank=True, help_text="minutes")
-    geners = models.ManyToManyField(Ganer, related_name="movies", blank=True)
+    genres = models.ManyToManyField(Genre, related_name="movies", blank=True)
     poster = models.ImageField(upload_to="posters/", blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     search_vector = SearchVectorField(null=True, editable=False)
 
     class Meta:
-        oredering = ["-created_at"]
+        ordering = ["-created_at"]
         indexes = [
             GinIndex(fields=["search_vector"], name="movie_search_vector_idx"),
             GinIndex(fields=["title"], name="movie_title_idx", opclasses=["gin_trgm_ops"])
@@ -42,7 +41,7 @@ class Movie(models.Model):
     def __str__(self):
         return f"{self.title} ({self.release_year})"
 
-    def get_absalute_url(self):
+    def get_absolute_url(self):
         return reverse("movies:detail", args=[self.slug])
 
     """
@@ -55,10 +54,10 @@ class Movie(models.Model):
     @staticmethod
     def build_search_vector():
         return (
-            SearchVector("title", weight="A", config="English")
-            + SearchVector("director", weight="B", config="English")
-            + SearchVector("cast", weight="B", config="English")
-            + SearchVector("overview", weight="C", config="English")
+            SearchVector("title", weight="A", config="english")
+            + SearchVector("director", weight="B", config="english")
+            + SearchVector("cast", weight="B", config="english")
+            + SearchVector("overview", weight="C", config="english")
         )
 
     def save(self, *args, **kwargs):
@@ -74,8 +73,8 @@ class Movie(models.Model):
     
     @property
     def cast_list(self):
-        return [c.strip() for c in self.cast.split(".") if c.strip()]
-        # "tom.joe.michel." -> "tom" "joe" "michel" ""
+        return [c.strip() for c in self.cast.split(",") if c.strip()]
+        # "tom, joe, michel," -> "tom" "joe" "michel"
 
 class Review(models.Model):
     movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name="reviews")
@@ -103,3 +102,6 @@ class WatchlistItem(models.Model):
         constraints = [
             models.UniqueConstraint(fields=["user", "movie"], name="unique_watchlist_item"),
         ]
+
+    def __str__(self):
+        return f"{self.user} ★ {self.movie}"
